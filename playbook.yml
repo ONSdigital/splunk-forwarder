@@ -1,0 +1,10 @@
+- hosts: all
+  vars:
+    splunk_log_items:
+      app_name: custom
+      source: "/var/log/messages"
+      index: "syslog"
+      sourcetype: linux_messages_syslog
+
+  gather_facts: true
+- include: ./tasks/main.yml

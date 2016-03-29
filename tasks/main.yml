@@ -1,0 +1,65 @@
+---
+- hosts: all
+  sudo: yes
+  gather_facts: true
+  vars:
+
+
+  tasks:
+  - name: Set Default variables
+    include_vars: ../defaults/main.yml
+  - name: Download splunk forwarder
+    tags:
+     - ubuntu
+     - debian
+     - download
+    # We have to set validate_certs=False due to download.splunk.com using SNI yet mitigate by checking md5 checksum
+    shell: curl -o /tmp/splunk.deb {{splunk_download_url}}
+
+  - name: create splunk user
+    user: name="splunk" shell="/sbin/nologin" password="!!" groups="" createhome=no
+    tags: user
+
+  - name: Install splunk forwarder
+    tags:
+      - install
+    command: sudo dpkg -i /tmp/splunk.deb
+
+  - name: Chown splunk to {{splunk_dir}}/
+    file: path="{{splunk_dir}}" owner="splunk" group="splunk" recurse="yes" state=directory
+
+  - name: Configure service to start at boot
+    command: "{{splunk_dir}}/bin/splunk enable boot-start -user splunk --accept-license --answer-yes creates={{splunk_dir}}/etc/users/splunk-system-user"
+
+  - name: Accept splunk license
+    command: "{{splunk_dir}}/bin/splunk start --accept-license --answer-yes creates={{splunk_dir}}/etc/users/splunk-system-user"
+    tags: install
+
+  - name: create input configuration with default input files
+    template:
+      src="../templates/inputs_conf.j2"
+      dest="{{splunk_dir}}etc/system/local/inputs.conf"
+      owner="splunk"
+      group="splunk"
+      mode=600
+    with_items:
+      - splunk_log_items
+    tags: config
+
+  - name: create output configuration
+    template:
+      src="outputs_conf.j2"
+      dest="{{splunk_dir}}etc/system/local/outputs.conf"
+      owner="splunk"
+      group="splunk"
+      mode=600
+    with_items: splunk_log_items
+    tags: config
+
+  - name: Start Splunk forwarder service.
+    tags:
+      - config
+      - restart
+      - install
+      - user
+    service: name=splunk state=restarted

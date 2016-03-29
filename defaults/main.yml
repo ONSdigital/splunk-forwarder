@@ -1,0 +1,10 @@
+---
+splunk_server: '127.0.0.1:9997'
+splunk_dir: '/opt/splunkforwarder/'
+splunk_download_url: 'https://download.splunk.com/products/universalforwarder/releases/6.3.3/linux/splunkforwarder-6.3.3-f44afce176d0-linux-2.6-amd64.deb'
+splunk_download_md5: '40688513e318aa300a109d1d3f0aa4f4'
+splunk_log_items:
+  - app_name: custom
+    source: "/var/log/messages"
+    index: "syslog"
+    sourcetype: linux_messages_syslog

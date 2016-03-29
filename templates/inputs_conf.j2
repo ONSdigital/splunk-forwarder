@@ -1,0 +1,10 @@
+[default]
+host = {{ansible_hostname}}
+
+{% for loggable in splunk_log_items %}
+[monitor://{{loggable.source}}]
+index = {{loggable.index}}
+sourcetype = {{loggable.sourcetype}}
+crcSalt = <SOURCE>
+
+{% endfor %}
